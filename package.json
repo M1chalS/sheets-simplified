@@ -1,0 +1,23 @@
+{
+  "name": "sheets-simplified",
+  "version": "1.0.0",
+  "description": "Easy to use Google sheets connector",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "files": [
+    "build/**/*"
+  ],
+  "scripts": {
+    "clean": "del-cli ./build/*",
+    "build": "npm run clean && tsc"
+  },
+  "author": "M1chalS",
+  "license": "ISC",
+  "dependencies": {
+    "googleapis": "^120.0.0"
+  },
+  "devDependencies": {
+    "del-cli": "^5.0.0",
+    "typescript": "^5.1.6"
+  }
+}
