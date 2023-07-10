@@ -1,54 +1,18 @@
 import {google, sheets_v4} from "googleapis";
 import {GoogleSheetsAuth} from "./google-sheets-auth";
 import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, ValueRenderOption} from "./types";
-
-interface GetRequestConfiguration {
-    range?: string;
-    majorDimension?: Dimension;
-    valueRenderOption?: ValueRenderOption;
-    dateTimeRenderOption?: DateTimeRenderOption;
-}
-
-interface AppendRequestConfiguration {
-    // range?: string;
-    valueInputOption?: ValueInputOption;
-    insertDataOption?: InsertDataOption;
-    includeValuesInResponse?: boolean;
-    responseDateTimeRenderOption?: DateTimeRenderOption;
-    responseValueRenderOption?: ValueRenderOption;
-}
-
-interface UpdateRequestConfiguration {
-    range: string;
-    valueInputOption?: ValueInputOption;
-    includeValuesInResponse?: boolean;
-    responseDateTimeRenderOption?: DateTimeRenderOption;
-    responseValueRenderOption?: ValueRenderOption;
-}
-
-interface ClearRequestConfiguration {
-    range: string;
-}
-
-interface Configuration {
-    auth: GoogleSheetsAuth;
-    spreadsheetId: string;
-    sheet: string;
-    range?: string;
-    valueRenderOption?: ValueRenderOption;
-    valueInputOption?: ValueInputOption;
-    insertDataOption?: InsertDataOption;
-    majorDimension?: Dimension;
-    dateTimeRenderOption?: DateTimeRenderOption;
-    includeValuesInResponse?: boolean;
-    responseDateTimeRenderOption?: DateTimeRenderOption;
-    responseValueRenderOption?: ValueRenderOption;
-}
+import {
+    AppendRequestConfiguration,
+    ClearRequestConfiguration,
+    Configuration,
+    GetRequestConfiguration,
+    UpdateRequestConfiguration
+} from "./configurations";
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
-    public readonly sheetRange: string | null = null;
-    public readonly startingSheetIndex: number | null = null;
+    public readonly sheetRange?: string;
+    public readonly startingSheetIndex?: number;
     private readonly authWrapper: GoogleSheetsAuth;
     private readonly spreadsheetId: string;
     private readonly sheet: string;
@@ -103,13 +67,13 @@ export class SheetsConnection {
     };
 
     public append = async (data: any[], cfg?: AppendRequestConfiguration) => {
-        return await this.sheets.spreadsheets.values.append(this.appendRequestPayload(data,{
+        return await this.sheets.spreadsheets.values.append(this.appendRequestPayload(data, {
             ...cfg
         }));
     };
 
     public update = async (data: any[], cfg: UpdateRequestConfiguration) => {
-        return await this.sheets.spreadsheets.values.update(this.updateRequestPayload(data,{
+        return await this.sheets.spreadsheets.values.update(this.updateRequestPayload(data, {
             ...cfg
         }));
     };
@@ -118,7 +82,10 @@ export class SheetsConnection {
         return await this.sheets.spreadsheets.values.clear(this.clearRequestPayload(cfg));
     };
 
-    private readonly generalPayload = () => ({
+    private readonly generalPayload = () : {
+        spreadsheetId: string;
+        auth: GoogleSheetsAuth;
+    } => ({
         spreadsheetId: this.spreadsheetId,
         auth: this.authWrapper,
     });
