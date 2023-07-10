@@ -1,129 +1,156 @@
-import { google, sheets_v4 } from "googleapis";
+import {google, sheets_v4} from "googleapis";
+import {GoogleSheetsAuth} from "./google-sheets-auth";
+
+enum ValueRenderOption {
+    FORMATTED_VALUE = "FORMATTED_VALUE",
+    UNFORMATTED_VALUE = "UNFORMATTED_VALUE",
+    FORMULA = "FORMULA"
+}
+
+enum ValueInputOption {
+    RAW = "RAW",
+    USER_ENTERED = "USER_ENTERED"
+}
+
+enum InsertDataOption {
+    OVERWRITE = "OVERWRITE",
+    INSERT_ROWS = "INSERT_ROWS"
+}
+
+interface GetRequestConfiguration {
+    range?: string;
+    valueRenderOption?: ValueRenderOption;
+}
+
+interface AppendRequestConfiguration {
+    // range?: string;
+    valueInputOption?: ValueInputOption;
+    insertDataOption?: InsertDataOption;
+}
+
+interface UpdateRequestConfiguration {
+    range: string;
+    valueInputOption?: ValueInputOption;
+}
+
+interface ClearRequestConfiguration {
+    range: string;
+}
+
+interface Configuration {
+    auth: GoogleSheetsAuth;
+    spreadsheetId: string;
+    sheet: string;
+    range?: string;
+    valueRenderOption?: ValueRenderOption;
+    valueInputOption?: ValueInputOption;
+    insertDataOption?: InsertDataOption;
+}
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
-    public readonly sheetRange: string;
-    public readonly startingSheetIndex:number = 1;
+    public readonly sheetRange: string | null = null;
+    public readonly startingSheetIndex: number | null = null;
+    private readonly authWrapper: GoogleSheetsAuth;
+    private readonly spreadsheetId: string;
+    private readonly sheet: string;
+    private readonly range: string | null;
+    private readonly valueRenderOption: ValueRenderOption;
+    private readonly valueInputOption: ValueInputOption;
+    private readonly insertDataOption?: InsertDataOption;
 
-    constructor(private authWrapper: any,
-                private spreadsheetId: string,
-                private sheet: string,
-                private range: string) {
+    public constructor(cfg: Configuration) {
+        this.spreadsheetId = cfg.spreadsheetId;
+        this.sheet = cfg.sheet;
+        this.range = cfg.range ?? null;
+        this.authWrapper = cfg.auth;
+        this.valueRenderOption = cfg.valueRenderOption ?? ValueRenderOption.UNFORMATTED_VALUE;
+        this.insertDataOption = cfg.insertDataOption ?? undefined;
+        this.valueInputOption = cfg.valueInputOption ?? ValueInputOption.RAW;
 
-        const sheet_index = range.split(":")[0].slice(1);
-        this.startingSheetIndex = parseInt(sheet_index);
-        this.sheetRange = sheet + `!${ range }`;
+        if (this.range && this.range.split(":").length > 1) {
+            const sheet_index = this.range.split(":")[0].slice(1);
+            this.startingSheetIndex = parseInt(sheet_index);
+            this.sheetRange = this.sheet + `!${this.range}`;
+        }
 
         Object.setPrototypeOf(this, SheetsConnection.prototype);
     }
 
-    public get = async (range?: string[]) => {
-        if(!range || range.length < 1) {
-            return await this.sheets.spreadsheets.values.get({
-                spreadsheetId: this.spreadsheetId,
-                auth: this.authWrapper,
+    public get = async (cfg?: GetRequestConfiguration) => {
+        if (!cfg?.range) {
+            if (!this.sheetRange) {
+                throw new Error("Specify range in this method or in constructor");
+            }
+
+            return await this.sheets.spreadsheets.values.get(this.getRequestPayload({
                 range: this.sheetRange,
-            });
+                ...cfg
+            }));
         }
 
-        const rangeHelper = this.range!.split(":");
-        let range1: string;
-
-        if (range && range[0] && range[1]) {
-            range1 = this.sheet + "!" + rangeHelper[0].charAt(0) + range[0] + ":" + rangeHelper[1] + range[1];
-        } else if(range && range[0] && !range[1]) {
-            range1 = this.sheet + "!" + rangeHelper[0].charAt(0) + range[0] + ":" + rangeHelper[1] + range[0];
-        } else {
-            throw new Error("Invalid range");
-        }
-
-        return await this.sheets.spreadsheets.values.get({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
-            range: range1,
-        });
+        return await this.sheets.spreadsheets.values.get(this.getRequestPayload({
+            ...cfg
+        }));
     };
 
-    public getCount = async () => {
+    public append = async (data: any[], cfg?: AppendRequestConfiguration) => {
+        return await this.sheets.spreadsheets.values.append(this.appendRequestPayload(data,{
+            ...cfg
+        }));
+    };
 
-        let range_letter: string = this.sheetRange.split("!")[1].split(":")[0].charAt(0);
+    public update = async (data: any[], cfg: UpdateRequestConfiguration) => {
+        return await this.sheets.spreadsheets.values.update(this.updateRequestPayload(data,{
+            ...cfg
+        }));
+    };
 
+    public clear = async (cfg: ClearRequestConfiguration) => {
+        return await this.sheets.spreadsheets.values.clear(this.clearRequestPayload(cfg));
+    };
 
-        let data = await this.sheets.spreadsheets.values.get({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
+    private readonly generalPayload = () => ({
+        spreadsheetId: this.spreadsheetId,
+        auth: this.authWrapper,
+    });
+
+    private getRequestPayload = (cfg: GetRequestConfiguration): object => {
+        return {
+            ...this.generalPayload(),
+            valueRenderOption: cfg.valueRenderOption ?? this.valueRenderOption,
+            ...cfg
+        }
+    }
+
+    private appendRequestPayload = (data: any[], cfg: AppendRequestConfiguration): object => {
+        return {
+            ...this.generalPayload(),
+            valueInputOption: cfg.valueInputOption ?? this.valueInputOption,
+            insertDataOption: cfg.insertDataOption ?? this.insertDataOption,
             range: this.sheetRange,
-        });
-
-        if(!data || !data.data.values) {
-            return 0;
-            // range_letter = String.fromCharCode(range_letter.charCodeAt(0) + 1);
-        }
-
-        return (data.data.values?.length)+this.startingSheetIndex-1;
-
-    };
-
-    public post = async (values: any[], index?: number) => {
-        if (index) {
-            return this.update(values, index);
-        }
-
-        console.log("Creating...");
-        return await this.sheets.spreadsheets.values.append({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
-            range: this.sheetRange,
-            valueInputOption: "RAW",
             requestBody: {
-                values
-            }
-        });
-    };
-
-    public refresh = async (values: any[]) => {
-        console.log("Deleting old data");
-        await this.sheets.spreadsheets.values.clear({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
-            range: this.sheetRange
-        });
-
-        console.log("Posting fresh data");
-        for (const row of values) {
-            const index = row.pop();
-            await this.post([ row ], index);
+                values: data
+            },
+            ...cfg
         }
-        console.log('Data updated.');
-    };
+    }
 
-    public update = async (values: any[], index: number) => {
-        console.log("Updating...");
-        const rangeHelper = this.range!.split(":");
-        const range = this.sheet+"!"+rangeHelper[0].charAt(0) + index + ":" + rangeHelper[1] + index;
-
-        await this.sheets.spreadsheets.values.update({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
-            range: range,
-            valueInputOption: "RAW",
+    private updateRequestPayload = (data: any[], cfg: UpdateRequestConfiguration): object => {
+        return {
+            ...this.generalPayload(),
+            valueInputOption: cfg.valueInputOption ?? this.valueInputOption,
             requestBody: {
-                values
-            }
-        });
-        console.log("Data updated.");
-    };
+                values: data
+            },
+            ...cfg
+        }
+    }
 
-    public delete = async (index: number) => {
-        console.log("Deleting...");
-        const rangeHelper = this.range!.split(":");
-        const range = this.sheet+"!"+rangeHelper[0].charAt(0) + index + ":" + rangeHelper[1] + index;
-
-        await this.sheets.spreadsheets.values.clear({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
-            range: range,
-        });
-        console.log("Deleted.");
-    };
+    private clearRequestPayload = (cfg: ClearRequestConfiguration): object => {
+        return {
+            ...this.generalPayload(),
+            ...cfg
+        }
+    }
 }
