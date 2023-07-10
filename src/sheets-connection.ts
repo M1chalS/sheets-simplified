@@ -1,36 +1,29 @@
 import {google, sheets_v4} from "googleapis";
 import {GoogleSheetsAuth} from "./google-sheets-auth";
-
-enum ValueRenderOption {
-    FORMATTED_VALUE = "FORMATTED_VALUE",
-    UNFORMATTED_VALUE = "UNFORMATTED_VALUE",
-    FORMULA = "FORMULA"
-}
-
-enum ValueInputOption {
-    RAW = "RAW",
-    USER_ENTERED = "USER_ENTERED"
-}
-
-enum InsertDataOption {
-    OVERWRITE = "OVERWRITE",
-    INSERT_ROWS = "INSERT_ROWS"
-}
+import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, ValueRenderOption} from "./types";
 
 interface GetRequestConfiguration {
     range?: string;
+    majorDimension?: Dimension;
     valueRenderOption?: ValueRenderOption;
+    dateTimeRenderOption?: DateTimeRenderOption;
 }
 
 interface AppendRequestConfiguration {
     // range?: string;
     valueInputOption?: ValueInputOption;
     insertDataOption?: InsertDataOption;
+    includeValuesInResponse?: boolean;
+    responseDateTimeRenderOption?: DateTimeRenderOption;
+    responseValueRenderOption?: ValueRenderOption;
 }
 
 interface UpdateRequestConfiguration {
     range: string;
     valueInputOption?: ValueInputOption;
+    includeValuesInResponse?: boolean;
+    responseDateTimeRenderOption?: DateTimeRenderOption;
+    responseValueRenderOption?: ValueRenderOption;
 }
 
 interface ClearRequestConfiguration {
@@ -45,6 +38,11 @@ interface Configuration {
     valueRenderOption?: ValueRenderOption;
     valueInputOption?: ValueInputOption;
     insertDataOption?: InsertDataOption;
+    majorDimension?: Dimension;
+    dateTimeRenderOption?: DateTimeRenderOption;
+    includeValuesInResponse?: boolean;
+    responseDateTimeRenderOption?: DateTimeRenderOption;
+    responseValueRenderOption?: ValueRenderOption;
 }
 
 export class SheetsConnection {
@@ -58,15 +56,25 @@ export class SheetsConnection {
     private readonly valueRenderOption: ValueRenderOption;
     private readonly valueInputOption: ValueInputOption;
     private readonly insertDataOption?: InsertDataOption;
+    private readonly majorDimension: Dimension;
+    private readonly dateTimeRenderOption: DateTimeRenderOption;
+    private readonly includeValuesInResponse: boolean;
+    private readonly responseDateTimeRenderOption: DateTimeRenderOption;
+    private readonly responseValueRenderOption: ValueRenderOption;
 
     public constructor(cfg: Configuration) {
         this.spreadsheetId = cfg.spreadsheetId;
         this.sheet = cfg.sheet;
         this.range = cfg.range ?? null;
         this.authWrapper = cfg.auth;
-        this.valueRenderOption = cfg.valueRenderOption ?? ValueRenderOption.UNFORMATTED_VALUE;
+        this.valueRenderOption = cfg.valueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
         this.insertDataOption = cfg.insertDataOption ?? undefined;
         this.valueInputOption = cfg.valueInputOption ?? ValueInputOption.RAW;
+        this.majorDimension = cfg.majorDimension ?? Dimension.ROWS;
+        this.dateTimeRenderOption = cfg.dateTimeRenderOption ?? DateTimeRenderOption.FORMATTED_STRING;
+        this.includeValuesInResponse = cfg.includeValuesInResponse ?? false;
+        this.responseDateTimeRenderOption = cfg.responseDateTimeRenderOption ?? DateTimeRenderOption.FORMATTED_STRING;
+        this.responseValueRenderOption = cfg.responseValueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
 
         if (this.range && this.range.split(":").length > 1) {
             const sheet_index = this.range.split(":")[0].slice(1);
@@ -118,7 +126,9 @@ export class SheetsConnection {
     private getRequestPayload = (cfg: GetRequestConfiguration): object => {
         return {
             ...this.generalPayload(),
+            majorDimension: cfg.majorDimension ?? this.majorDimension,
             valueRenderOption: cfg.valueRenderOption ?? this.valueRenderOption,
+            dateTimeRenderOption: cfg.dateTimeRenderOption ?? this.dateTimeRenderOption,
             ...cfg
         }
     }
@@ -128,6 +138,9 @@ export class SheetsConnection {
             ...this.generalPayload(),
             valueInputOption: cfg.valueInputOption ?? this.valueInputOption,
             insertDataOption: cfg.insertDataOption ?? this.insertDataOption,
+            includeValuesInResponse: cfg.includeValuesInResponse ?? this.includeValuesInResponse,
+            responseDateTimeRenderOption: cfg.responseDateTimeRenderOption ?? this.responseDateTimeRenderOption,
+            responseValueRenderOption: cfg.responseValueRenderOption ?? this.responseValueRenderOption,
             range: this.sheetRange,
             requestBody: {
                 values: data
@@ -140,6 +153,9 @@ export class SheetsConnection {
         return {
             ...this.generalPayload(),
             valueInputOption: cfg.valueInputOption ?? this.valueInputOption,
+            includeValuesInResponse: cfg.includeValuesInResponse ?? this.includeValuesInResponse,
+            responseDateTimeRenderOption: cfg.responseDateTimeRenderOption ?? this.responseDateTimeRenderOption,
+            responseValueRenderOption: cfg.responseValueRenderOption ?? this.responseValueRenderOption,
             requestBody: {
                 values: data
             },
