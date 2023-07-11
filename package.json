@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "clean": "del-cli ./build/*",
-    "build": "npm run clean && tsc"
+    "build": "npm run clean && tsc",
+    "test": "jest --coverage"
   },
   "author": "M1chalS",
   "license": "ISC",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "del-cli": "^5.0.0",
+    "ts-jest": "^29.1.1",
     "typescript": "^5.1.6"
   }
 }

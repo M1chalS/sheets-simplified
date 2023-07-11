@@ -1,5 +1,5 @@
-import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, ValueRenderOption} from "./types";
-import {GoogleSheetsAuth} from "./google-sheets-auth";
+import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, ValueRenderOption} from "../types/types";
+import {GoogleSheetsAuth} from "../auth/google-sheets-auth";
 
 export interface GetRequestConfiguration {
     range?: string;

@@ -1,2 +1,2 @@
-export * from "./google-sheets-auth";
-export * from "./sheets-connection";
+export * from "./auth/google-sheets-auth";
+export * from "./sheets/sheets-connection";

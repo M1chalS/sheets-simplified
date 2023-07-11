@@ -1,13 +1,13 @@
 import {google, sheets_v4} from "googleapis";
-import {GoogleSheetsAuth} from "./google-sheets-auth";
-import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, ValueRenderOption} from "./types";
+import {GoogleSheetsAuth} from "../auth/google-sheets-auth";
+import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, ValueRenderOption} from "../types/types";
 import {
     AppendRequestConfiguration,
     ClearRequestConfiguration,
     Configuration,
     GetRequestConfiguration,
     UpdateRequestConfiguration
-} from "./configurations";
+} from "../config/configurations";
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
