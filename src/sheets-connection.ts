@@ -15,8 +15,8 @@ export class SheetsConnection {
     public readonly startingSheetIndex?: number;
     private readonly authWrapper: GoogleSheetsAuth;
     private readonly spreadsheetId: string;
-    private readonly sheet: string;
-    private readonly range: string | null;
+    private readonly sheet?: string;
+    private readonly range?: string;
     private readonly valueRenderOption: ValueRenderOption;
     private readonly valueInputOption: ValueInputOption;
     private readonly insertDataOption?: InsertDataOption;
@@ -28,8 +28,8 @@ export class SheetsConnection {
 
     public constructor(cfg: Configuration) {
         this.spreadsheetId = cfg.spreadsheetId;
-        this.sheet = cfg.sheet;
-        this.range = cfg.range ?? null;
+        this.sheet = cfg.sheet ?? undefined;
+        this.range = cfg.range ?? undefined;
         this.authWrapper = cfg.auth;
         this.valueRenderOption = cfg.valueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
         this.insertDataOption = cfg.insertDataOption ?? undefined;
@@ -40,7 +40,7 @@ export class SheetsConnection {
         this.responseDateTimeRenderOption = cfg.responseDateTimeRenderOption ?? DateTimeRenderOption.FORMATTED_STRING;
         this.responseValueRenderOption = cfg.responseValueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
 
-        if (this.range && this.range.split(":").length > 1) {
+        if (this.sheet && this.range && this.range.split(":").length > 1) {
             const sheet_index = this.range.split(":")[0].slice(1);
             this.startingSheetIndex = parseInt(sheet_index);
             this.sheetRange = this.sheet + `!${this.range}`;
@@ -50,90 +50,97 @@ export class SheetsConnection {
     }
 
     public get = async (cfg?: GetRequestConfiguration) => {
-        if (!cfg?.range) {
-            if (!this.sheetRange) {
-                throw new Error("Specify range in this method or in constructor");
-            }
-
-            return await this.sheets.spreadsheets.values.get(this.getRequestPayload({
-                range: this.sheetRange,
-                ...cfg
-            }));
-        }
-
-        return await this.sheets.spreadsheets.values.get(this.getRequestPayload({
-            ...cfg
-        }));
+        return await this.sheets.spreadsheets.values.get(this.getRequestPayload(cfg));
     };
 
     public append = async (data: any[], cfg?: AppendRequestConfiguration) => {
-        return await this.sheets.spreadsheets.values.append(this.appendRequestPayload(data, {
-            ...cfg
-        }));
+        return await this.sheets.spreadsheets.values.append(this.appendRequestPayload(data, {...cfg}));
     };
 
     public update = async (data: any[], cfg: UpdateRequestConfiguration) => {
-        return await this.sheets.spreadsheets.values.update(this.updateRequestPayload(data, {
-            ...cfg
-        }));
+        return await this.sheets.spreadsheets.values.update(this.updateRequestPayload(data, cfg));
     };
 
     public clear = async (cfg: ClearRequestConfiguration) => {
         return await this.sheets.spreadsheets.values.clear(this.clearRequestPayload(cfg));
     };
 
-    private readonly generalPayload = () : {
+    private readonly generalPayload = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): {
         spreadsheetId: string;
         auth: GoogleSheetsAuth;
-    } => ({
-        spreadsheetId: this.spreadsheetId,
-        auth: this.authWrapper,
-    });
+        range: string;
+    } => {
+        const range = this.getSheetRange(cfg);
 
-    private getRequestPayload = (cfg: GetRequestConfiguration): object => {
         return {
-            ...this.generalPayload(),
-            majorDimension: cfg.majorDimension ?? this.majorDimension,
-            valueRenderOption: cfg.valueRenderOption ?? this.valueRenderOption,
-            dateTimeRenderOption: cfg.dateTimeRenderOption ?? this.dateTimeRenderOption,
-            ...cfg
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            range,
+        }
+    };
+
+    private getRequestPayload = (cfg?: GetRequestConfiguration): object => {
+
+        return {
+            ...this.generalPayload(cfg),
+            majorDimension: cfg?.majorDimension ?? this.majorDimension,
+            valueRenderOption: cfg?.valueRenderOption ?? this.valueRenderOption,
+            dateTimeRenderOption: cfg?.dateTimeRenderOption ?? this.dateTimeRenderOption,
         }
     }
 
-    private appendRequestPayload = (data: any[], cfg: AppendRequestConfiguration): object => {
+    private appendRequestPayload = (data: any[], cfg?: AppendRequestConfiguration): object => {
         return {
-            ...this.generalPayload(),
-            valueInputOption: cfg.valueInputOption ?? this.valueInputOption,
-            insertDataOption: cfg.insertDataOption ?? this.insertDataOption,
-            includeValuesInResponse: cfg.includeValuesInResponse ?? this.includeValuesInResponse,
-            responseDateTimeRenderOption: cfg.responseDateTimeRenderOption ?? this.responseDateTimeRenderOption,
-            responseValueRenderOption: cfg.responseValueRenderOption ?? this.responseValueRenderOption,
-            range: this.sheetRange,
+            ...this.generalPayload(cfg),
+            valueInputOption: cfg?.valueInputOption ?? this.valueInputOption,
+            insertDataOption: cfg?.insertDataOption ?? this.insertDataOption,
+            includeValuesInResponse: cfg?.includeValuesInResponse ?? this.includeValuesInResponse,
+            responseDateTimeRenderOption: cfg?.responseDateTimeRenderOption ?? this.responseDateTimeRenderOption,
+            responseValueRenderOption: cfg?.responseValueRenderOption ?? this.responseValueRenderOption,
             requestBody: {
                 values: data
             },
-            ...cfg
         }
     }
 
-    private updateRequestPayload = (data: any[], cfg: UpdateRequestConfiguration): object => {
+    private updateRequestPayload = (data: any[], cfg?: UpdateRequestConfiguration): object => {
         return {
-            ...this.generalPayload(),
-            valueInputOption: cfg.valueInputOption ?? this.valueInputOption,
-            includeValuesInResponse: cfg.includeValuesInResponse ?? this.includeValuesInResponse,
-            responseDateTimeRenderOption: cfg.responseDateTimeRenderOption ?? this.responseDateTimeRenderOption,
-            responseValueRenderOption: cfg.responseValueRenderOption ?? this.responseValueRenderOption,
+            ...this.generalPayload(cfg),
+            valueInputOption: cfg?.valueInputOption ?? this.valueInputOption,
+            includeValuesInResponse: cfg?.includeValuesInResponse ?? this.includeValuesInResponse,
+            responseDateTimeRenderOption: cfg?.responseDateTimeRenderOption ?? this.responseDateTimeRenderOption,
+            responseValueRenderOption: cfg?.responseValueRenderOption ?? this.responseValueRenderOption,
             requestBody: {
                 values: data
             },
-            ...cfg
         }
     }
 
-    private clearRequestPayload = (cfg: ClearRequestConfiguration): object => {
+    private clearRequestPayload = (cfg?: ClearRequestConfiguration): object => {
         return {
-            ...this.generalPayload(),
-            ...cfg
+            ...this.generalPayload(cfg),
         }
+    }
+
+    private readonly getSheetRange = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): string => {
+        if (
+            (!this.sheetRange && (!cfg?.sheet && !cfg?.range)) ||
+            (!this.sheetRange && cfg?.sheet && !cfg?.range) ||
+            (this.sheet && !this.range && !cfg?.sheet && !cfg?.range) ||
+            (this.sheet && !this.range && cfg?.sheet && !cfg?.range) ||
+            (this.sheetRange && cfg?.sheet && !cfg?.range)
+        ) {
+            throw new Error("Specify range or sheet in method or in constructor");
+        }
+
+        if(cfg) {
+            if (cfg.sheet && cfg.range) {
+                return `${cfg.sheet}!${cfg.range}`;
+            } else if (cfg.range) {
+                return `${this.sheet}!${cfg.range}`;
+            }
+        }
+
+        return this.sheetRange!;
     }
 }

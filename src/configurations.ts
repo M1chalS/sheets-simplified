@@ -3,13 +3,15 @@ import {GoogleSheetsAuth} from "./google-sheets-auth";
 
 export interface GetRequestConfiguration {
     range?: string;
+    sheet?: string;
     majorDimension?: Dimension;
     valueRenderOption?: ValueRenderOption;
     dateTimeRenderOption?: DateTimeRenderOption;
 }
 
 export interface AppendRequestConfiguration {
-    // range?: string;
+    range?: string;
+    sheet?: string;
     valueInputOption?: ValueInputOption;
     insertDataOption?: InsertDataOption;
     includeValuesInResponse?: boolean;
@@ -18,7 +20,8 @@ export interface AppendRequestConfiguration {
 }
 
 export interface UpdateRequestConfiguration {
-    range: string;
+    range?: string;
+    sheet?: string;
     valueInputOption?: ValueInputOption;
     includeValuesInResponse?: boolean;
     responseDateTimeRenderOption?: DateTimeRenderOption;
@@ -26,13 +29,14 @@ export interface UpdateRequestConfiguration {
 }
 
 export interface ClearRequestConfiguration {
-    range: string;
+    range?: string;
+    sheet?: string;
 }
 
 export interface Configuration {
     auth: GoogleSheetsAuth;
     spreadsheetId: string;
-    sheet: string;
+    sheet?: string;
     range?: string;
     valueRenderOption?: ValueRenderOption;
     valueInputOption?: ValueInputOption;

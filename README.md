@@ -1,10 +1,10 @@
 # Sheets Simplified
 
-TypeScript classes based interface that eases and increases safety of working with Google Sheets API v4.
+TypeScript classes based package that eases and increases safety of working with Google Sheets API v4.
 
-## Example use
+## Usage recommendation
 
-### Setup
+### Auth and `SheetsConnection` object setup
 
 Create `google-auth-wrapper.ts` that contains your GoogleCloud login info.
 
@@ -31,7 +31,7 @@ const sheetsConnection = new SheetsConnection({
 });
 ```
 
-### Usage
+### Main methods
 
 #### Get data
 
@@ -102,7 +102,7 @@ const response = await sheetsConnection.append([
 
 #### Update data
 
-To update data in sheets you can use `update` method for first argument providing array of data you want to add to sheets and as a second argument providing configuration object containing at least `range` and if you haven't specified it in constructor also `sheet`.
+To update data in sheets you can use `update` method for first argument providing array of data you want to add to sheets, also if you want to use different sheet or range you can provide them in second parameter by creating configuration object specifying `sheet` and `range`.
 
 ```typescript
 const response = await sheetsConnection.update(
@@ -112,7 +112,7 @@ const response = await sheetsConnection.update(
     ],
     {
         sheet: "Sheet1",
-        range: "B1:C4",
+        range: "A2:D3",
     }
 );
 ```
@@ -128,12 +128,12 @@ Updated data will look like this:
 
 #### Clear data
 
-To clear data in sheets you can use `clear` method for first argument providing configuration object containing at least `range` and if you haven't specified it in constructor also `sheet`.
+To clear data in sheets you can use `clear` method, if you provided `sheet` and `range` in constructor you don't have to provide any arguments, but if you want to use different values you can provide them in first parameter by creating configuration object specifying `sheet` and `range`.
 
 ```typescript
 const response = await sheetsConnection.clear({
     sheet: "Sheet1",
-    range: "B1:C4",
+    range: "A2:D3",
 });
 ```
 
@@ -145,5 +145,21 @@ Cleared data will look like this:
     <tr><td>A4</td><td>B4</td><td>C4</td><td>D4</td></tr>
     <tr><td>A5</td><td>B5</td><td>C5</td><td>D5</td></tr>
 </table>
+
+# Development setup
+
+### Install dependencies
+
+```shell
+npm install
+```
+
+### Build
+
+```shell
+npm run build
+```
+
+Compiled JavaScript will be placed in `/build` folder.
 
 _Made by Michał Szajner_
