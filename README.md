@@ -160,6 +160,12 @@ npm install
 npm run build
 ```
 
+### Run tests
+
+```shell
+npm run test
+```
+
 Compiled JavaScript will be placed in `/build` folder.
 
 _Made by Michał Szajner_

@@ -13,7 +13,7 @@ export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
     public readonly sheetRange?: string;
     public readonly startingSheetIndex?: number;
-    private readonly authWrapper: GoogleSheetsAuth;
+    private readonly authWrapper: any;
     private readonly spreadsheetId: string;
     private readonly sheet?: string;
     private readonly range?: string;
@@ -57,11 +57,11 @@ export class SheetsConnection {
         return await this.sheets.spreadsheets.values.append(this.appendRequestPayload(data, {...cfg}));
     };
 
-    public update = async (data: any[], cfg: UpdateRequestConfiguration) => {
+    public update = async (data: any[], cfg?: UpdateRequestConfiguration) => {
         return await this.sheets.spreadsheets.values.update(this.updateRequestPayload(data, cfg));
     };
 
-    public clear = async (cfg: ClearRequestConfiguration) => {
+    public clear = async (cfg?: ClearRequestConfiguration) => {
         return await this.sheets.spreadsheets.values.clear(this.clearRequestPayload(cfg));
     };
 
@@ -128,7 +128,9 @@ export class SheetsConnection {
             (!this.sheetRange && cfg?.sheet && !cfg?.range) ||
             (this.sheet && !this.range && !cfg?.sheet && !cfg?.range) ||
             (this.sheet && !this.range && cfg?.sheet && !cfg?.range) ||
-            (this.sheetRange && cfg?.sheet && !cfg?.range)
+            (this.sheetRange && cfg?.sheet && !cfg?.range) ||
+            (!this.sheet && !this.range && !cfg?.sheet && cfg?.range) ||
+            (!this.sheet && this.range && !cfg?.sheet && cfg?.range)
         ) {
             throw new Error("Specify range or sheet in method or in constructor");
         }
