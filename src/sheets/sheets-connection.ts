@@ -12,7 +12,6 @@ import {
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
     public readonly sheetRange?: string;
-    public readonly startingSheetIndex?: number;
     private readonly authWrapper: any;
     private readonly spreadsheetId: string;
     private readonly sheet?: string;
@@ -40,10 +39,8 @@ export class SheetsConnection {
         this.responseDateTimeRenderOption = cfg.responseDateTimeRenderOption ?? DateTimeRenderOption.FORMATTED_STRING;
         this.responseValueRenderOption = cfg.responseValueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
 
-        if (this.sheet && this.range && this.range.split(":").length > 1) {
-            const sheet_index = this.range.split(":")[0].slice(1);
-            this.startingSheetIndex = parseInt(sheet_index);
-            this.sheetRange = this.sheet + `!${this.range}`;
+        if (this.sheet && this.range) {
+            this.sheetRange = `${this.sheet}!${this.range}`;
         }
 
         Object.setPrototypeOf(this, SheetsConnection.prototype);

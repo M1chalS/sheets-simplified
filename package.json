@@ -1,7 +1,7 @@
 {
   "name": "sheets-simplified",
   "version": "1.0.0",
-  "description": "Easy to use Google sheets connector",
+  "description": "TypeScript classes based package that eases and increases safety of working with Google Sheets API v4.",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
   "files": [
