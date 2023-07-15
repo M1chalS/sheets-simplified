@@ -6,6 +6,7 @@ export interface GetRequestConfiguration {
     majorDimension?: Dimension;
     valueRenderOption?: ValueRenderOption;
     dateTimeRenderOption?: DateTimeRenderOption;
+    firstRowAsHeader?: boolean;
 }
 
 export interface AppendRequestConfiguration {
@@ -45,4 +46,5 @@ export interface Configuration {
     includeValuesInResponse?: boolean;
     responseDateTimeRenderOption?: DateTimeRenderOption;
     responseValueRenderOption?: ValueRenderOption;
+    firstRowAsHeader?: boolean;
 }

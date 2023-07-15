@@ -8,6 +8,7 @@ import {
     GetRequestConfiguration,
     UpdateRequestConfiguration
 } from "../config/configurations";
+import {responseFormatter} from "../response-formatter/response-formatter";
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
@@ -24,6 +25,7 @@ export class SheetsConnection {
     private readonly includeValuesInResponse: boolean;
     private readonly responseDateTimeRenderOption: DateTimeRenderOption;
     private readonly responseValueRenderOption: ValueRenderOption;
+    private readonly firstRowAsHeader: boolean;
 
     public constructor(cfg: Configuration) {
         this.spreadsheetId = cfg.spreadsheetId;
@@ -38,6 +40,7 @@ export class SheetsConnection {
         this.includeValuesInResponse = cfg.includeValuesInResponse ?? false;
         this.responseDateTimeRenderOption = cfg.responseDateTimeRenderOption ?? DateTimeRenderOption.FORMATTED_STRING;
         this.responseValueRenderOption = cfg.responseValueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
+        this.firstRowAsHeader = cfg.firstRowAsHeader ?? false;
 
         if (this.sheet && this.range) {
             this.sheetRange = `${this.sheet}!${this.range}`;
@@ -47,7 +50,9 @@ export class SheetsConnection {
     }
 
     public get = async (cfg?: GetRequestConfiguration) => {
-        return await this.sheets.spreadsheets.values.get(this.getRequestPayload(cfg));
+        const res = await this.sheets.spreadsheets.values.get(this.getRequestPayload(cfg));
+
+        return (this.firstRowAsHeader || cfg?.firstRowAsHeader) ? responseFormatter(res) : res;
     };
 
     public append = async (data: any[], cfg?: AppendRequestConfiguration) => {

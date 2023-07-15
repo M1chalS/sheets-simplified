@@ -223,3 +223,110 @@ describe('Range logic checks', () => {
     });
 
 });
+
+describe('Response formatter checks', () => {
+
+    test('Expect response to not be formatted', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B"
+        });
+
+        await sheetsConnection.append([[
+            "test1",
+            "test2"
+        ], [
+            "test3",
+            "test4"
+        ]]);
+
+        const res = await sheetsConnection.get();
+
+        expect(res.data.values[0][0] === "test1").toBeTruthy();
+        expect(res.data.values[0][1] === "test2").toBeTruthy();
+        expect(res.data.values[1][0] === "test3").toBeTruthy();
+        expect(res.data.values[1][1] === "test4").toBeTruthy();
+
+        await sheetsConnection.clear();
+    });
+
+    test('Expect response to be formatted (set in constructor)', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+            firstRowAsHeader: true
+        });
+
+        await sheetsConnection.append([[
+            "test1",
+            "test2"
+        ], [
+            "test3",
+            "test4"
+        ]]);
+
+        const res = await sheetsConnection.get();
+
+        expect(res.data.values[0].test1 === "test3").toBeTruthy();
+        expect(res.data.values[0].test2 === "test4").toBeTruthy();
+
+        await sheetsConnection.clear();
+    });
+
+    test('Expect response to be formatted (set in method)', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+        });
+
+        await sheetsConnection.append([[
+            "test1",
+            "test2"
+        ], [
+            "test3",
+            "test4"
+        ]]);
+
+        const res = await sheetsConnection.get({
+            firstRowAsHeader: true
+        });
+
+        expect(res.data.values[0].test1 === "test3").toBeTruthy();
+        expect(res.data.values[0].test2 === "test4").toBeTruthy();
+
+        await sheetsConnection.clear();
+    });
+
+    test('Expect response to be formatted (set in both)', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+            firstRowAsHeader: true
+        });
+
+        await sheetsConnection.append([[
+            "test1",
+            "test2"
+        ], [
+            "test3",
+            "test4"
+        ]]);
+
+        const res = await sheetsConnection.get({
+            firstRowAsHeader: true
+        });
+
+        expect(res.data.values[0].test1 === "test3").toBeTruthy();
+        expect(res.data.values[0].test2 === "test4").toBeTruthy();
+
+        await sheetsConnection.clear();
+    });
+});
