@@ -44,6 +44,14 @@ describe('SheetsConnection main methods', () => {
         expect(await sheetsConnection.clear()).toBeTruthy();
     });
 
+    test('Expect createSheet method to work', async () => {
+        expect(await sheetsConnection.createSheet("test1234")).toBeTruthy();
+    });
+
+    test('Expect deleteSheet method to work', async () => {
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234"})).toBeTruthy();
+    });
+
 });
 
 describe('Range logic checks', () => {

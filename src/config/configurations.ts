@@ -48,3 +48,8 @@ export interface Configuration {
     responseValueRenderOption?: ValueRenderOption;
     firstRowAsHeader?: boolean;
 }
+
+export interface DeleteSheetConfiguration {
+    sheetId?: number;
+    sheetName?: string;
+}

@@ -4,7 +4,7 @@ import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, Val
 import {
     AppendRequestConfiguration,
     ClearRequestConfiguration,
-    Configuration,
+    Configuration, DeleteSheetConfiguration,
     GetRequestConfiguration,
     UpdateRequestConfiguration
 } from "../config/configurations";
@@ -49,32 +49,6 @@ export class SheetsConnection {
         Object.setPrototypeOf(this, SheetsConnection.prototype);
     }
 
-    public createSheet = async (sheetName: string) => {
-        const res = await this.sheets.spreadsheets.batchUpdate({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
-            requestBody: {
-                requests: [
-                    {
-                        addSheet: {
-                            properties: {
-                                title: sheetName,
-                            }
-                        }
-                    }
-                ]
-            }
-        });
-
-        if(res.status !== 200) {
-            throw new Error(`Error creating sheet ${sheetName}`);
-        }
-
-        this.sheet = sheetName;
-
-        return res;
-    }
-
     public get = async (cfg?: GetRequestConfiguration) => {
         const res = await this.sheets.spreadsheets.values.get(this.getRequestPayload(cfg));
 
@@ -92,6 +66,73 @@ export class SheetsConnection {
     public clear = async (cfg?: ClearRequestConfiguration) => {
         return await this.sheets.spreadsheets.values.clear(this.clearRequestPayload(cfg));
     };
+
+    public createSheet = async (sheetName: string) => {
+        return await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        addSheet: {
+                            properties: {
+                                title: sheetName,
+                            }
+                        }
+                    }
+                ]
+            }
+        });
+    }
+
+    public deleteSheet = async (cfg?: DeleteSheetConfiguration) => {
+        const sheetName = cfg?.sheetName ?? this.sheet;
+
+        if(!sheetName && !cfg?.sheetId) {
+            throw new Error(`Sheet name or sheet id must be provided`);
+        }
+
+        if(cfg?.sheetName && cfg?.sheetId) {
+            throw new Error(`Sheet name and sheet id cannot be provided at the same time`);
+        }
+
+        return await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        deleteSheet: {
+                            sheetId: cfg?.sheetId ? cfg.sheetId : await this.getSheetId(sheetName!),
+                        }
+                    }
+                ]
+            }
+        });
+    }
+
+    private getSheetId = async (sheetName: string) => {
+        const sheet = await this.getSheet(sheetName);
+
+        if(!sheet) {
+            throw new Error(`Sheet ${sheetName} not found`);
+        }
+
+        return sheet.properties?.sheetId;
+    }
+
+    private getSheet = async (sheetName: string) => {
+        const sheets = await this.sheets.spreadsheets.get({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+        }).then(res => res.data.sheets)
+
+        if (!sheets) {
+            throw new Error(`Error getting sheets`);
+        }
+
+        return sheets.find(sheet => sheet.properties?.title === sheetName);
+    }
 
     private readonly generalPayload = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): {
         spreadsheetId: string;
