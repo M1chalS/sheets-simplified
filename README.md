@@ -146,6 +146,46 @@ Cleared data will look like this:
     <tr><td>A5</td><td>B5</td><td>C5</td><td>D5</td></tr>
 </table>
 
+### Create new sheet
+
+To create new sheet you can use `createSheet` method, you need to provide `sheetName` in configuration object.
+
+```typescript
+const response = await sheetsConnection.createSheet({
+    sheetName: "New Sheet",
+});
+```
+
+If you want to change sheet provided in the constructor you can provide `allowSheetNameModifications` in configuration object or in constructor (this is set to true as default).
+
+```typescript
+const response = await sheetsConnection.createSheet({
+    sheetName: "New Sheet",
+    allowSheetNameModifications: true,
+});
+```
+
+### Delete sheet
+
+To delete sheet you can use `deleteSheet` method, you need to provide `sheetName` or `sheetId` in configuration object. If none of them is provided constructors `sheet` value will be used (if it's set). 
+
+If you want to change sheet provided in the constructor you can provide `allowSheetNameModifications` in configuration object or in constructor (this is set to true as default).
+
+With sheet name:
+```typescript
+const response = await sheetsConnection.deleteSheet({
+    sheetName: "New Sheet",
+});
+```
+
+With sheet id:
+```typescript
+const response = await sheetsConnection.deleteSheet({
+    sheetName: 12345678,
+    allowSheetNameModifications: true,
+});
+```
+
 #### Special Features
 When getting data you can set `firstRowAsHeader` as true to get data formatted as object with keys from first row. You can do it in constructor or in `get` method.
 

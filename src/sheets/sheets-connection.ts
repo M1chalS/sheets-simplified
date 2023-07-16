@@ -13,7 +13,7 @@ import {responseFormatter} from "../response-formatter/response-formatter";
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
     private sheet?: string;
-    public readonly sheetRange?: string;
+    private sheetRange?: string;
     private readonly authWrapper: any;
     private readonly spreadsheetId: string;
     private readonly range?: string;
@@ -96,6 +96,10 @@ export class SheetsConnection {
 
         if(cfg.allowSheetNameModifications ?? this.allowSheetNameModifications) {
             this.sheet = cfg.sheetName;
+
+            if(this.range) {
+                this.sheetRange = `${this.sheet}!${this.range}`;
+            }
         }
 
         return res;
@@ -132,6 +136,7 @@ export class SheetsConnection {
 
         if(cfg?.allowSheetNameModifications ?? this.allowSheetNameModifications) {
             this.sheet = undefined;
+            this.sheetRange = undefined;
         }
 
         return res;
