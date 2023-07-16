@@ -4,7 +4,7 @@ import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, Val
 import {
     AppendRequestConfiguration,
     ClearRequestConfiguration,
-    Configuration, DeleteSheetConfiguration,
+    Configuration, CreateSheetConfiguration, DeleteSheetConfiguration,
     GetRequestConfiguration,
     UpdateRequestConfiguration
 } from "../config/configurations";
@@ -12,7 +12,7 @@ import {responseFormatter} from "../response-formatter/response-formatter";
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
-    private sheet?: string;
+    public sheet?: string;
     public readonly sheetRange?: string;
     private readonly authWrapper: any;
     private readonly spreadsheetId: string;
@@ -26,6 +26,7 @@ export class SheetsConnection {
     private readonly responseDateTimeRenderOption: DateTimeRenderOption;
     private readonly responseValueRenderOption: ValueRenderOption;
     private readonly firstRowAsHeader: boolean;
+    private readonly allowSheetNameModifications: boolean;
 
     public constructor(cfg: Configuration) {
         this.spreadsheetId = cfg.spreadsheetId;
@@ -41,6 +42,7 @@ export class SheetsConnection {
         this.responseDateTimeRenderOption = cfg.responseDateTimeRenderOption ?? DateTimeRenderOption.FORMATTED_STRING;
         this.responseValueRenderOption = cfg.responseValueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
         this.firstRowAsHeader = cfg.firstRowAsHeader ?? false;
+        this.allowSheetNameModifications = cfg.allowSheetNameModifications ?? true;
 
         if (this.sheet && this.range) {
             this.sheetRange = `${this.sheet}!${this.range}`;
@@ -67,8 +69,8 @@ export class SheetsConnection {
         return await this.sheets.spreadsheets.values.clear(this.clearRequestPayload(cfg));
     };
 
-    public createSheet = async (sheetName: string) => {
-        return await this.sheets.spreadsheets.batchUpdate({
+    public createSheet = async (cfg: CreateSheetConfiguration) => {
+        const res= await this.sheets.spreadsheets.batchUpdate({
             spreadsheetId: this.spreadsheetId,
             auth: this.authWrapper,
             requestBody: {
@@ -76,13 +78,23 @@ export class SheetsConnection {
                     {
                         addSheet: {
                             properties: {
-                                title: sheetName,
+                                title: cfg.sheetName,
                             }
                         }
                     }
                 ]
             }
         });
+
+        if(res.status !== 200) {
+            return res;
+        }
+
+        if(cfg.allowSheetNameModifications ?? this.allowSheetNameModifications) {
+            this.sheet = cfg.sheetName;
+        }
+
+        return res;
     }
 
     public deleteSheet = async (cfg?: DeleteSheetConfiguration) => {
@@ -96,7 +108,7 @@ export class SheetsConnection {
             throw new Error(`Sheet name and sheet id cannot be provided at the same time`);
         }
 
-        return await this.sheets.spreadsheets.batchUpdate({
+        const res = await this.sheets.spreadsheets.batchUpdate({
             spreadsheetId: this.spreadsheetId,
             auth: this.authWrapper,
             requestBody: {
@@ -109,13 +121,23 @@ export class SheetsConnection {
                 ]
             }
         });
+
+        if(res.status !== 200) {
+            return res;
+        }
+
+        if(cfg?.allowSheetNameModifications ?? this.allowSheetNameModifications) {
+            this.sheet = undefined;
+        }
+
+        return res;
     }
 
     private getSheetId = async (sheetName: string) => {
         const sheet = await this.getSheet(sheetName);
 
         if(!sheet) {
-            throw new Error(`Sheet ${sheetName} not found`);
+            throw new Error(`Sheet: ${sheetName} not found`);
         }
 
         return sheet.properties?.sheetId;

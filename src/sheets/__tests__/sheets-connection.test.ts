@@ -45,7 +45,7 @@ describe('SheetsConnection main methods', () => {
     });
 
     test('Expect createSheet method to work', async () => {
-        expect(await sheetsConnection.createSheet("test1234")).toBeTruthy();
+        expect(await sheetsConnection.createSheet({sheetName: "test1234"})).toBeTruthy();
     });
 
     test('Expect deleteSheet method to work', async () => {

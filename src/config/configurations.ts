@@ -47,9 +47,16 @@ export interface Configuration {
     responseDateTimeRenderOption?: DateTimeRenderOption;
     responseValueRenderOption?: ValueRenderOption;
     firstRowAsHeader?: boolean;
+    allowSheetNameModifications?: boolean;
+}
+
+export interface CreateSheetConfiguration {
+    sheetName: string;
+    allowSheetNameModifications?: boolean;
 }
 
 export interface DeleteSheetConfiguration {
     sheetId?: number;
     sheetName?: string;
+    allowSheetNameModifications?: boolean;
 }
