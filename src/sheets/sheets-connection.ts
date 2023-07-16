@@ -4,7 +4,7 @@ import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, Val
 import {
     AppendRequestConfiguration,
     ClearRequestConfiguration,
-    Configuration,
+    Configuration, CreateSheetConfiguration, DeleteSheetConfiguration,
     GetRequestConfiguration,
     UpdateRequestConfiguration
 } from "../config/configurations";
@@ -12,10 +12,10 @@ import {responseFormatter} from "../response-formatter/response-formatter";
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
+    private sheet?: string;
     public readonly sheetRange?: string;
     private readonly authWrapper: any;
     private readonly spreadsheetId: string;
-    private readonly sheet?: string;
     private readonly range?: string;
     private readonly valueRenderOption: ValueRenderOption;
     private readonly valueInputOption: ValueInputOption;
@@ -26,6 +26,11 @@ export class SheetsConnection {
     private readonly responseDateTimeRenderOption: DateTimeRenderOption;
     private readonly responseValueRenderOption: ValueRenderOption;
     private readonly firstRowAsHeader: boolean;
+    private readonly allowSheetNameModifications: boolean;
+
+    public getSheetName() : string | undefined {
+        return this.sheet;
+    }
 
     public constructor(cfg: Configuration) {
         this.spreadsheetId = cfg.spreadsheetId;
@@ -41,6 +46,7 @@ export class SheetsConnection {
         this.responseDateTimeRenderOption = cfg.responseDateTimeRenderOption ?? DateTimeRenderOption.FORMATTED_STRING;
         this.responseValueRenderOption = cfg.responseValueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
         this.firstRowAsHeader = cfg.firstRowAsHeader ?? false;
+        this.allowSheetNameModifications = cfg.allowSheetNameModifications ?? true;
 
         if (this.sheet && this.range) {
             this.sheetRange = `${this.sheet}!${this.range}`;
@@ -66,6 +72,93 @@ export class SheetsConnection {
     public clear = async (cfg?: ClearRequestConfiguration) => {
         return await this.sheets.spreadsheets.values.clear(this.clearRequestPayload(cfg));
     };
+
+    public createSheet = async (cfg: CreateSheetConfiguration) => {
+        const res= await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        addSheet: {
+                            properties: {
+                                title: cfg.sheetName,
+                            }
+                        }
+                    }
+                ]
+            }
+        });
+
+        if(res.status !== 200) {
+            return res;
+        }
+
+        if(cfg.allowSheetNameModifications ?? this.allowSheetNameModifications) {
+            this.sheet = cfg.sheetName;
+        }
+
+        return res;
+    }
+
+    public deleteSheet = async (cfg?: DeleteSheetConfiguration) => {
+        const sheetName = cfg?.sheetName ?? this.sheet;
+
+        if(!sheetName && !cfg?.sheetId) {
+            throw new Error(`Sheet name or sheet id must be provided`);
+        }
+
+        if(cfg?.sheetName && cfg?.sheetId) {
+            throw new Error(`Sheet name and sheet id cannot be provided at the same time`);
+        }
+
+        const res = await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        deleteSheet: {
+                            sheetId: cfg?.sheetId ? cfg.sheetId : await this.getSheetId(sheetName!),
+                        }
+                    }
+                ]
+            }
+        });
+
+        if(res.status !== 200) {
+            return res;
+        }
+
+        if(cfg?.allowSheetNameModifications ?? this.allowSheetNameModifications) {
+            this.sheet = undefined;
+        }
+
+        return res;
+    }
+
+    private getSheetId = async (sheetName: string) => {
+        const sheet = await this.getSheet(sheetName);
+
+        if(!sheet) {
+            throw new Error(`Sheet: ${sheetName} not found`);
+        }
+
+        return sheet.properties?.sheetId;
+    }
+
+    private getSheet = async (sheetName: string) => {
+        const sheets = await this.sheets.spreadsheets.get({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+        }).then(res => res.data.sheets)
+
+        if (!sheets) {
+            throw new Error(`Error getting sheets`);
+        }
+
+        return sheets.find(sheet => sheet.properties?.title === sheetName);
+    }
 
     private readonly generalPayload = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): {
         spreadsheetId: string;

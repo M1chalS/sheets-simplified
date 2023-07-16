@@ -44,6 +44,34 @@ describe('SheetsConnection main methods', () => {
         expect(await sheetsConnection.clear()).toBeTruthy();
     });
 
+    test('Expect createSheet method to work', async () => {
+        expect(await sheetsConnection.createSheet({sheetName: "test1234"})).toBeTruthy();
+    });
+
+    test('Expect deleteSheet method to work', async () => {
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234"})).toBeTruthy();
+    });
+
+    test('Expect name or sheet id must to be provided', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            range: "A1:B",
+        });
+
+        await expect(sheetsConnection.deleteSheet()).rejects.toThrow("Sheet name or sheet id must be provided");
+    });
+
+    test('Expect sheet name and sheet id to not be provided at the same time', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            range: "A1:B",
+        });
+
+        await expect(sheetsConnection.deleteSheet({sheetName: "test1234", sheetId: 12345678})).rejects.toThrow("Sheet name and sheet id cannot be provided at the same time");
+    });
+
 });
 
 describe('Range logic checks', () => {
@@ -328,5 +356,139 @@ describe('Response formatter checks', () => {
         expect(res.data.values[0].test2 === "test4").toBeTruthy();
 
         await sheetsConnection.clear();
+    });
+});
+
+describe('Allow sheet modification checks', () => {
+
+    test('Expect to modify sheet name by default', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B"
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("test1234");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe(undefined);
+    });
+
+    test('Expect allow sheet modification to modify sheet name when set to true in constructor', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+            allowSheetNameModifications: true
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("test1234");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe(undefined);
+    });
+
+    test('Expect allow sheet modification to not modify sheet name when set to false in constructor', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+            allowSheetNameModifications: false
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("Sheet1");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("Sheet1");
+    });
+
+    test('Expect allow sheet modification to modify sheet name when set to true in method variant 1', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+            allowSheetNameModifications: false
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234", allowSheetNameModifications: true})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("test1234");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("test1234");
+    });
+
+    test('Expect allow sheet modification to modify sheet name when set to true in method variant 2', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+            allowSheetNameModifications: false
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("Sheet1");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234", allowSheetNameModifications: true})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe(undefined);
+    });
+
+    test('Expect allow sheet modification to modify sheet name when set to true in method variant 3', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+            allowSheetNameModifications: false
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234", allowSheetNameModifications: true})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("test1234");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234", allowSheetNameModifications: true})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe(undefined);
+    });
+
+    test('Expect allow sheet modification to not modify sheet name when set to false in method variant 1', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234", allowSheetNameModifications: false})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("Sheet1");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe(undefined);
+    });
+
+    test('Expect allow sheet modification to not modify sheet name when set to false in method variant 2', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234"})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("test1234");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234", allowSheetNameModifications: false})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("test1234");
+    });
+
+    test('Expect allow sheet modification to not modify sheet name when set to false in method variant 3', async () => {
+        const sheetsConnection = new SheetsConnection({
+            spreadsheetId: process.env.SHEET_ID!,
+            auth: googleAuthWrapper,
+            sheet: "Sheet1",
+            range: "A1:B",
+        });
+
+        expect(await sheetsConnection.createSheet({sheetName: "test1234", allowSheetNameModifications: false})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("Sheet1");
+        expect(await sheetsConnection.deleteSheet({ sheetName: "test1234", allowSheetNameModifications: false})).toBeTruthy();
+        expect(sheetsConnection.getSheetName()).toBe("Sheet1");
     });
 });
