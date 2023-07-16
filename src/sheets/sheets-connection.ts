@@ -12,10 +12,10 @@ import {responseFormatter} from "../response-formatter/response-formatter";
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
+    private sheet?: string;
     public readonly sheetRange?: string;
     private readonly authWrapper: any;
     private readonly spreadsheetId: string;
-    private readonly sheet?: string;
     private readonly range?: string;
     private readonly valueRenderOption: ValueRenderOption;
     private readonly valueInputOption: ValueInputOption;
@@ -47,6 +47,32 @@ export class SheetsConnection {
         }
 
         Object.setPrototypeOf(this, SheetsConnection.prototype);
+    }
+
+    public createSheet = async (sheetName: string) => {
+        const res = await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        addSheet: {
+                            properties: {
+                                title: sheetName,
+                            }
+                        }
+                    }
+                ]
+            }
+        });
+
+        if(res.status !== 200) {
+            throw new Error(`Error creating sheet ${sheetName}`);
+        }
+
+        this.sheet = sheetName;
+
+        return res;
     }
 
     public get = async (cfg?: GetRequestConfiguration) => {
