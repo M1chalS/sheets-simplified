@@ -12,7 +12,7 @@ import {responseFormatter} from "../response-formatter/response-formatter";
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
-    public sheet?: string;
+    private sheet?: string;
     public readonly sheetRange?: string;
     private readonly authWrapper: any;
     private readonly spreadsheetId: string;
@@ -27,6 +27,10 @@ export class SheetsConnection {
     private readonly responseValueRenderOption: ValueRenderOption;
     private readonly firstRowAsHeader: boolean;
     private readonly allowSheetNameModifications: boolean;
+
+    public getSheetName() : string | undefined {
+        return this.sheet;
+    }
 
     public constructor(cfg: Configuration) {
         this.spreadsheetId = cfg.spreadsheetId;
