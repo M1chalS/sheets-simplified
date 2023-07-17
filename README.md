@@ -181,7 +181,7 @@ const response = await sheetsConnection.deleteSheet({
 With sheet id:
 ```typescript
 const response = await sheetsConnection.deleteSheet({
-    sheetName: 12345678,
+    sheetId: 12345678,
     allowSheetNameModifications: true,
 });
 ```
