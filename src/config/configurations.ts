@@ -60,3 +60,10 @@ export interface DeleteSheetConfiguration {
     sheetName?: string;
     allowSheetNameModifications?: boolean;
 }
+
+export interface CreateNamedRangeConfiguration {
+    sheetId?: number;
+    sheetName?: string;
+    range: string;
+    name: string;
+}

@@ -4,7 +4,7 @@ import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, Val
 import {
     AppendRequestConfiguration,
     ClearRequestConfiguration,
-    Configuration, CreateSheetConfiguration, DeleteSheetConfiguration,
+    Configuration, CreateNamedRangeConfiguration, CreateSheetConfiguration, DeleteSheetConfiguration,
     GetRequestConfiguration,
     UpdateRequestConfiguration
 } from "../config/configurations";
@@ -163,6 +163,63 @@ export class SheetsConnection {
         }
 
         return sheets.find(sheet => sheet.properties?.title === sheetName);
+    }
+
+    public createNamedRange = async (cfg: CreateNamedRangeConfiguration) => {
+        const [firstRangeHalf, secondRangeHalf] = cfg.range.split(":");
+        let startRowIndex: number | undefined;
+        let endRowIndex: number | undefined;
+        let startColumnIndex: number | undefined;
+        let endColumnIndex: number | undefined;
+
+        if(!firstRangeHalf || !secondRangeHalf) {
+            throw new Error(`Invalid range`);
+        }
+
+        const [firstRangeHalfColumn, firstRangeHalfRow] = firstRangeHalf;
+        const [secondRangeHalfColumn, secondRangeHalfRow] = secondRangeHalf;
+
+        const alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+        startRowIndex = Number(firstRangeHalfRow) - 1;
+        endRowIndex = Number(secondRangeHalfRow);
+
+        alphabet.split("").forEach((letter, index) => {
+            if(letter.toUpperCase() === firstRangeHalfColumn.toUpperCase()) {
+                startColumnIndex = index;
+                return;
+            }
+        });
+
+        alphabet.split("").forEach((letter, index) => {
+            if(letter.toUpperCase() === secondRangeHalfColumn.toUpperCase()) {
+                endColumnIndex = index + 1;
+                return;
+            }
+        });
+
+        return await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        addNamedRange: {
+                            namedRange: {
+                                name: cfg.name,
+                                range: {
+                                    sheetId: cfg.sheetId ?? await this.getSheetId(cfg.sheetName!),
+                                    startRowIndex,
+                                    endRowIndex,
+                                    startColumnIndex,
+                                    endColumnIndex,
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        });
     }
 
     private readonly generalPayload = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): {
