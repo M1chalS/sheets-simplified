@@ -4,7 +4,11 @@ import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, Val
 import {
     AppendRequestConfiguration,
     ClearRequestConfiguration,
-    Configuration, CreateNamedRangeConfiguration, CreateSheetConfiguration, DeleteSheetConfiguration,
+    Configuration,
+    CreateNamedRangeConfiguration,
+    CreateSheetConfiguration,
+    DeleteNamedRangeConfiguration,
+    DeleteSheetConfiguration,
     GetRequestConfiguration,
     UpdateRequestConfiguration
 } from "../config/configurations";
@@ -152,6 +156,19 @@ export class SheetsConnection {
         return sheet.properties?.sheetId;
     }
 
+    private getNamedRanges = async () => {
+        const namedRanges = await this.sheets.spreadsheets.get({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+        }).then(res => res.data.namedRanges);
+
+        if(!namedRanges) {
+            throw new Error(`Error getting named ranges`);
+        }
+
+        return namedRanges;
+    }
+
     private getSheet = async (sheetName: string) => {
         const sheets = await this.sheets.spreadsheets.get({
             spreadsheetId: this.spreadsheetId,
@@ -171,6 +188,7 @@ export class SheetsConnection {
         let endRowIndex: number | undefined;
         let startColumnIndex: number | undefined;
         let endColumnIndex: number | undefined;
+        const sheetName = cfg?.sheetName ?? this.sheet;
 
         if(!firstRangeHalf || !secondRangeHalf) {
             throw new Error(`Invalid range`);
@@ -208,13 +226,37 @@ export class SheetsConnection {
                             namedRange: {
                                 name: cfg.name,
                                 range: {
-                                    sheetId: cfg.sheetId ?? await this.getSheetId(cfg.sheetName!),
+                                    sheetId: cfg?.sheetId ? cfg.sheetId : await this.getSheetId(sheetName!),
                                     startRowIndex,
                                     endRowIndex,
                                     startColumnIndex,
                                     endColumnIndex,
                                 }
                             }
+                        }
+                    }
+                ]
+            }
+        });
+    }
+
+    public deleteNamedRange = async (cfg: DeleteNamedRangeConfiguration) => {
+        const namedRanges = await this.getNamedRanges();
+
+        const namedRange = namedRanges?.find(namedRange => namedRange.name === cfg.name);
+
+        if(!namedRange) {
+            throw new Error(`Named range: ${cfg.name} not found`);
+        }
+
+        return await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        deleteNamedRange: {
+                            namedRangeId: namedRange.namedRangeId,
                         }
                     }
                 ]
