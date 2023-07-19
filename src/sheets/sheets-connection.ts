@@ -156,7 +156,7 @@ export class SheetsConnection {
         return sheet.properties?.sheetId;
     }
 
-    private getNamedRanges = async () => {
+    public getNamedRanges = async () => {
         const namedRanges = await this.sheets.spreadsheets.get({
             spreadsheetId: this.spreadsheetId,
             auth: this.authWrapper,
@@ -226,7 +226,7 @@ export class SheetsConnection {
                             namedRange: {
                                 name: cfg.name,
                                 range: {
-                                    sheetId: cfg?.sheetId ? cfg.sheetId : await this.getSheetId(sheetName!),
+                                    sheetId: cfg.sheetId ? cfg.sheetId : await this.getSheetId(sheetName!),
                                     startRowIndex,
                                     endRowIndex,
                                     startColumnIndex,
@@ -241,12 +241,20 @@ export class SheetsConnection {
     }
 
     public deleteNamedRange = async (cfg: DeleteNamedRangeConfiguration) => {
-        const namedRanges = await this.getNamedRanges();
+        let namedRange;
 
-        const namedRange = namedRanges?.find(namedRange => namedRange.name === cfg.name);
+        if(cfg.name && !cfg.namedRangeId) {
+            const namedRanges = await this.getNamedRanges();
 
-        if(!namedRange) {
-            throw new Error(`Named range: ${cfg.name} not found`);
+            namedRange = namedRanges?.find(namedRange => namedRange.name === cfg.name);
+
+            if(!namedRange) {
+                throw new Error(`Named range: ${cfg.name} not found`);
+            }
+        }
+
+        if(!namedRange?.namedRangeId && !cfg.namedRangeId) {
+            throw new Error(`Named range name or id must be provided`);
         }
 
         return await this.sheets.spreadsheets.batchUpdate({
@@ -256,7 +264,7 @@ export class SheetsConnection {
                 requests: [
                     {
                         deleteNamedRange: {
-                            namedRangeId: namedRange.namedRangeId,
+                            namedRangeId: cfg.namedRangeId ? cfg.namedRangeId : namedRange?.namedRangeId,
                         }
                     }
                 ]

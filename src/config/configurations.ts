@@ -69,5 +69,6 @@ export interface CreateNamedRangeConfiguration {
 }
 
 export interface DeleteNamedRangeConfiguration {
-    name: string;
+    name?: string;
+    namedRangeId?: string;
 }
