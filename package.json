@@ -7,6 +7,15 @@
   "files": [
     "build/**/*"
   ],
+  "keywords": [
+    "google spreadsheets",
+    "google sheets",
+    "google",
+    "spreadsheet",
+    "spreadsheets",
+    "sheets",
+    "googleapis"
+  ],
   "scripts": {
     "clean": "del-cli ./build/*",
     "build": "npm run clean && tsc",
