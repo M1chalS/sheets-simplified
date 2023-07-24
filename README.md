@@ -18,7 +18,7 @@ const googleAuthWrapper = new GoogleSheetsAuth({
 
 export { googleAuthWrapper };
 ```
-Create a SheetsConnection object. The minimal required info to connect to a spreadsheet is the auth and spreadsheetId. You can also provide more info at this point, like sheet, range, or even more specific options like valueRenderOption. List of available options can be found in [this file](https://github.com/M1chalS/sheets-simplified/blob/master/config-options.md).
+Create a `SheetsConnection` object. The minimal required info to connect to a spreadsheet is the `auth` and `spreadsheetId`. You can also provide more info at this point, like sheet, range, or even more specific options like valueRenderOption. List of available options can be found in [this file](https://github.com/M1chalS/sheets-simplified/blob/master/config-options.md).
 
 ```typescript
 const sheetsConnection = new SheetsConnection({
