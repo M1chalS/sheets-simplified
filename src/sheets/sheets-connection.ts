@@ -18,6 +18,7 @@ export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
     private sheet?: string;
     private sheetRange?: string;
+    private namedRange?: string;
     private readonly authWrapper: any;
     private readonly spreadsheetId: string;
     private readonly range?: string;
@@ -51,6 +52,7 @@ export class SheetsConnection {
         this.responseValueRenderOption = cfg.responseValueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
         this.firstRowAsHeader = cfg.firstRowAsHeader ?? false;
         this.allowSheetNameModifications = cfg.allowSheetNameModifications ?? true;
+        this.namedRange = cfg.namedRange ?? undefined;
 
         if (this.sheet && this.range) {
             this.sheetRange = `${this.sheet}!${this.range}`;
@@ -146,42 +148,6 @@ export class SheetsConnection {
         return res;
     }
 
-    private getSheetId = async (sheetName: string) => {
-        const sheet = await this.getSheet(sheetName);
-
-        if(!sheet) {
-            throw new Error(`Sheet: ${sheetName} not found`);
-        }
-
-        return sheet.properties?.sheetId;
-    }
-
-    public getNamedRanges = async () => {
-        const namedRanges = await this.sheets.spreadsheets.get({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
-        }).then(res => res.data.namedRanges);
-
-        if(!namedRanges) {
-            throw new Error(`Error getting named ranges`);
-        }
-
-        return namedRanges;
-    }
-
-    private getSheet = async (sheetName: string) => {
-        const sheets = await this.sheets.spreadsheets.get({
-            spreadsheetId: this.spreadsheetId,
-            auth: this.authWrapper,
-        }).then(res => res.data.sheets)
-
-        if (!sheets) {
-            throw new Error(`Error getting sheets`);
-        }
-
-        return sheets.find(sheet => sheet.properties?.title === sheetName);
-    }
-
     public createNamedRange = async (cfg: CreateNamedRangeConfiguration) => {
         const [firstRangeHalf, secondRangeHalf] = cfg.range.split(":");
         let startRowIndex: number | undefined;
@@ -272,6 +238,42 @@ export class SheetsConnection {
         });
     }
 
+    private getSheetId = async (sheetName: string) => {
+        const sheet = await this.getSheet(sheetName);
+
+        if(!sheet) {
+            throw new Error(`Sheet: ${sheetName} not found`);
+        }
+
+        return sheet.properties?.sheetId;
+    }
+
+    private getNamedRanges = async () => {
+        const namedRanges = await this.sheets.spreadsheets.get({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+        }).then(res => res.data.namedRanges);
+
+        if(!namedRanges) {
+            throw new Error(`Error getting named ranges`);
+        }
+
+        return namedRanges;
+    }
+
+    private getSheet = async (sheetName: string) => {
+        const sheets = await this.sheets.spreadsheets.get({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+        }).then(res => res.data.sheets)
+
+        if (!sheets) {
+            throw new Error(`Error getting sheets`);
+        }
+
+        return sheets.find(sheet => sheet.properties?.title === sheetName);
+    }
+
     private readonly generalPayload = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): {
         spreadsheetId: string;
         auth: GoogleSheetsAuth;
@@ -330,6 +332,14 @@ export class SheetsConnection {
     }
 
     private readonly getSheetRange = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): string => {
+        if(cfg?.namedRange) {
+            return cfg.namedRange;
+        }
+
+        if(!cfg?.range && !cfg?.sheet && this.namedRange) {
+            return this.namedRange;
+        }
+
         if (
             (!this.sheetRange && (!cfg?.sheet && !cfg?.range)) ||
             (!this.sheetRange && cfg?.sheet && !cfg?.range) ||
