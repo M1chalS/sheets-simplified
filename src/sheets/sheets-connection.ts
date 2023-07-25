@@ -149,38 +149,45 @@ export class SheetsConnection {
     }
 
     public createNamedRange = async (cfg: CreateNamedRangeConfiguration) => {
-        const [firstRangeHalf, secondRangeHalf] = cfg.range.split(":");
-        let startRowIndex: number | undefined;
-        let endRowIndex: number | undefined;
-        let startColumnIndex: number | undefined;
-        let endColumnIndex: number | undefined;
+        let startRowIndex: number | undefined = cfg.startRowIndex;
+        let endRowIndex: number | undefined = cfg.endRowIndex
+        let startColumnIndex: number | undefined = cfg.startColumnIndex;
+        let endColumnIndex: number | undefined = cfg.endColumnIndex;
         const sheetName = cfg?.sheetName ?? this.sheet;
 
-        if(!firstRangeHalf || !secondRangeHalf) {
-            throw new Error(`Invalid range`);
+        if((cfg.startRowIndex === undefined || cfg.endRowIndex === undefined || cfg.startColumnIndex === undefined || cfg.endColumnIndex === undefined) && !cfg.range) {
+            throw new Error(`Range or startRowIndex, endRowIndex, startColumnIndex and endColumnIndex must be provided`);
         }
 
-        const [firstRangeHalfColumn, firstRangeHalfRow] = firstRangeHalf;
-        const [secondRangeHalfColumn, secondRangeHalfRow] = secondRangeHalf;
+        if(cfg.range) {
+            const [firstRangeHalf, secondRangeHalf] = cfg.range.split(":");
 
-        const alphabet = "abcdefghijklmnopqrstuvwxyz";
-
-        startRowIndex = Number(firstRangeHalfRow) - 1;
-        endRowIndex = Number(secondRangeHalfRow);
-
-        alphabet.split("").forEach((letter, index) => {
-            if(letter.toUpperCase() === firstRangeHalfColumn.toUpperCase()) {
-                startColumnIndex = index;
-                return;
+            if(!firstRangeHalf || !secondRangeHalf) {
+                throw new Error(`Invalid range`);
             }
-        });
 
-        alphabet.split("").forEach((letter, index) => {
-            if(letter.toUpperCase() === secondRangeHalfColumn.toUpperCase()) {
-                endColumnIndex = index + 1;
-                return;
-            }
-        });
+            const [firstRangeHalfColumn, firstRangeHalfRow] = firstRangeHalf;
+            const [secondRangeHalfColumn, secondRangeHalfRow] = secondRangeHalf;
+
+            const alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+            startRowIndex = Number(firstRangeHalfRow) - 1;
+            endRowIndex = Number(secondRangeHalfRow);
+
+            alphabet.split("").forEach((letter, index) => {
+                if(letter.toUpperCase() === firstRangeHalfColumn.toUpperCase()) {
+                    startColumnIndex = index;
+                    return;
+                }
+            });
+
+            alphabet.split("").forEach((letter, index) => {
+                if(letter.toUpperCase() === secondRangeHalfColumn.toUpperCase()) {
+                    endColumnIndex = index + 1;
+                    return;
+                }
+            });
+        }
 
         return await this.sheets.spreadsheets.batchUpdate({
             spreadsheetId: this.spreadsheetId,

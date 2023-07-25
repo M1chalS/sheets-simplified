@@ -69,8 +69,12 @@ export interface DeleteSheetConfiguration {
 export interface CreateNamedRangeConfiguration {
     sheetId?: number;
     sheetName?: string;
-    range: string;
+    range?: string;
     name: string;
+    startRowIndex?: number;
+    endRowIndex?: number;
+    startColumnIndex?: number;
+    endColumnIndex?: number;
 }
 
 export interface DeleteNamedRangeConfiguration {
