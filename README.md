@@ -1,8 +1,8 @@
-## Sheets Simplified
+# Sheets Simplified
 
 TypeScript classes based package that eases and increases safety of working with Google Sheets API v4.
 
-### Usage recommendation
+## Usage recommendation
 
 #### `Auth` and `SheetsConnection` setup
 
@@ -211,7 +211,7 @@ Response with `firstRowAsHeader` set to true:
 ]
 ```
 
-# Development setup
+## Development setup
 
 ### Install dependencies
 
