@@ -52,7 +52,7 @@ describe('SheetsConnection main methods', () => {
         expect(await sheetsConnection.deleteSheet({ sheetName: "test1234"})).toBeTruthy();
     });
 
-    test('Expect name or sheet id must to be provided', async () => {
+    test('Expect name or sheet id must to be provided in deleteSheet', async () => {
         const sheetsConnection = new SheetsConnection({
             spreadsheetId: process.env.SHEET_ID!,
             auth: googleAuthWrapper,
@@ -62,7 +62,7 @@ describe('SheetsConnection main methods', () => {
         await expect(sheetsConnection.deleteSheet()).rejects.toThrow("Sheet name or sheet id must be provided");
     });
 
-    test('Expect sheet name and sheet id to not be provided at the same time', async () => {
+    test('Expect sheet name and sheet id to not be provided at the same time in deleteSheet', async () => {
         const sheetsConnection = new SheetsConnection({
             spreadsheetId: process.env.SHEET_ID!,
             auth: googleAuthWrapper,
@@ -72,6 +72,17 @@ describe('SheetsConnection main methods', () => {
         await expect(sheetsConnection.deleteSheet({sheetName: "test1234", sheetId: 12345678})).rejects.toThrow("Sheet name and sheet id cannot be provided at the same time");
     });
 
+    test('Expect createNamedRange method to work', async () => {
+        expect(await sheetsConnection.createNamedRange({
+            sheetName: "Sheet1",
+            name: "testtest576432",
+            range: "A1:B4"
+        })).toBeTruthy();
+    });
+
+    test('Expect deleteNamedRange method to work', async () => {
+        expect(await sheetsConnection.deleteNamedRange({name: "testtest576432"})).toBeTruthy();
+    });
 });
 
 describe('Range logic checks', () => {

@@ -3,6 +3,7 @@ import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, Val
 export interface GetRequestConfiguration {
     range?: string;
     sheet?: string;
+    namedRange?: string;
     majorDimension?: Dimension;
     valueRenderOption?: ValueRenderOption;
     dateTimeRenderOption?: DateTimeRenderOption;
@@ -12,6 +13,7 @@ export interface GetRequestConfiguration {
 export interface AppendRequestConfiguration {
     range?: string;
     sheet?: string;
+    namedRange?: string;
     valueInputOption?: ValueInputOption;
     insertDataOption?: InsertDataOption;
     includeValuesInResponse?: boolean;
@@ -22,6 +24,7 @@ export interface AppendRequestConfiguration {
 export interface UpdateRequestConfiguration {
     range?: string;
     sheet?: string;
+    namedRange?: string;
     valueInputOption?: ValueInputOption;
     includeValuesInResponse?: boolean;
     responseDateTimeRenderOption?: DateTimeRenderOption;
@@ -31,6 +34,7 @@ export interface UpdateRequestConfiguration {
 export interface ClearRequestConfiguration {
     range?: string;
     sheet?: string;
+    namedRange?: string;
 }
 
 export interface Configuration {
@@ -38,6 +42,7 @@ export interface Configuration {
     spreadsheetId: string;
     sheet?: string;
     range?: string;
+    namedRange?: string;
     valueRenderOption?: ValueRenderOption;
     valueInputOption?: ValueInputOption;
     insertDataOption?: InsertDataOption;
@@ -59,4 +64,20 @@ export interface DeleteSheetConfiguration {
     sheetId?: number;
     sheetName?: string;
     allowSheetNameModifications?: boolean;
+}
+
+export interface CreateNamedRangeConfiguration {
+    sheetId?: number;
+    sheetName?: string;
+    range?: string;
+    name: string;
+    startRowIndex?: number;
+    endRowIndex?: number;
+    startColumnIndex?: number;
+    endColumnIndex?: number;
+}
+
+export interface DeleteNamedRangeConfiguration {
+    name?: string;
+    namedRangeId?: string;
 }

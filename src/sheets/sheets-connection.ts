@@ -4,7 +4,11 @@ import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, Val
 import {
     AppendRequestConfiguration,
     ClearRequestConfiguration,
-    Configuration, CreateSheetConfiguration, DeleteSheetConfiguration,
+    Configuration,
+    CreateNamedRangeConfiguration,
+    CreateSheetConfiguration,
+    DeleteNamedRangeConfiguration,
+    DeleteSheetConfiguration,
     GetRequestConfiguration,
     UpdateRequestConfiguration
 } from "../config/configurations";
@@ -14,6 +18,7 @@ export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
     private sheet?: string;
     private sheetRange?: string;
+    private namedRange?: string;
     private readonly authWrapper: any;
     private readonly spreadsheetId: string;
     private readonly range?: string;
@@ -47,6 +52,7 @@ export class SheetsConnection {
         this.responseValueRenderOption = cfg.responseValueRenderOption ?? ValueRenderOption.FORMATTED_VALUE;
         this.firstRowAsHeader = cfg.firstRowAsHeader ?? false;
         this.allowSheetNameModifications = cfg.allowSheetNameModifications ?? true;
+        this.namedRange = cfg.namedRange ?? undefined;
 
         if (this.sheet && this.range) {
             this.sheetRange = `${this.sheet}!${this.range}`;
@@ -142,6 +148,103 @@ export class SheetsConnection {
         return res;
     }
 
+    public createNamedRange = async (cfg: CreateNamedRangeConfiguration) => {
+        let startRowIndex: number | undefined = cfg.startRowIndex;
+        let endRowIndex: number | undefined = cfg.endRowIndex
+        let startColumnIndex: number | undefined = cfg.startColumnIndex;
+        let endColumnIndex: number | undefined = cfg.endColumnIndex;
+        const sheetName = cfg?.sheetName ?? this.sheet;
+
+        if((cfg.startRowIndex === undefined || cfg.endRowIndex === undefined || cfg.startColumnIndex === undefined || cfg.endColumnIndex === undefined) && !cfg.range) {
+            throw new Error(`Range or startRowIndex, endRowIndex, startColumnIndex and endColumnIndex must be provided`);
+        }
+
+        if(cfg.range) {
+            const [firstRangeHalf, secondRangeHalf] = cfg.range.split(":");
+
+            if(!firstRangeHalf || !secondRangeHalf) {
+                throw new Error(`Invalid range`);
+            }
+
+            const [firstRangeHalfLetter, ...firstRangeHalfNumbers] = firstRangeHalf;
+            const [secondRangeHalfLetter, ...secondRangeHalfNumber] = secondRangeHalf;
+
+            const alphabet = "abcdefghijklmnopqrstuvwxyz";
+
+            startRowIndex = Number(firstRangeHalfNumbers.join('')) - 1;
+            endRowIndex = Number(secondRangeHalfNumber.join(''));
+
+            alphabet.split("").forEach((letter, index) => {
+                if(letter.toUpperCase() === firstRangeHalfLetter.toUpperCase()) {
+                    startColumnIndex = index;
+                    return;
+                }
+            });
+
+            alphabet.split("").forEach((letter, index) => {
+                if(letter.toUpperCase() === secondRangeHalfLetter.toUpperCase()) {
+                    endColumnIndex = index + 1;
+                    return;
+                }
+            });
+        }
+
+        return await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        addNamedRange: {
+                            namedRange: {
+                                name: cfg.name,
+                                range: {
+                                    sheetId: cfg.sheetId ? cfg.sheetId : await this.getSheetId(sheetName!),
+                                    startRowIndex,
+                                    endRowIndex,
+                                    startColumnIndex,
+                                    endColumnIndex,
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        });
+    }
+
+    public deleteNamedRange = async (cfg: DeleteNamedRangeConfiguration) => {
+        let namedRange;
+
+        if(cfg.name && !cfg.namedRangeId) {
+            const namedRanges = await this.getNamedRanges();
+
+            namedRange = namedRanges?.find(namedRange => namedRange.name === cfg.name);
+
+            if(!namedRange) {
+                throw new Error(`Named range: ${cfg.name} not found`);
+            }
+        }
+
+        if(!namedRange?.namedRangeId && !cfg.namedRangeId) {
+            throw new Error(`Named range name or id must be provided`);
+        }
+
+        return await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+            requestBody: {
+                requests: [
+                    {
+                        deleteNamedRange: {
+                            namedRangeId: cfg.namedRangeId ? cfg.namedRangeId : namedRange?.namedRangeId,
+                        }
+                    }
+                ]
+            }
+        });
+    }
+
     private getSheetId = async (sheetName: string) => {
         const sheet = await this.getSheet(sheetName);
 
@@ -150,6 +253,19 @@ export class SheetsConnection {
         }
 
         return sheet.properties?.sheetId;
+    }
+
+    private getNamedRanges = async () => {
+        const namedRanges = await this.sheets.spreadsheets.get({
+            spreadsheetId: this.spreadsheetId,
+            auth: this.authWrapper,
+        }).then(res => res.data.namedRanges);
+
+        if(!namedRanges) {
+            throw new Error(`Error getting named ranges`);
+        }
+
+        return namedRanges;
     }
 
     private getSheet = async (sheetName: string) => {
@@ -223,6 +339,14 @@ export class SheetsConnection {
     }
 
     private readonly getSheetRange = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): string => {
+        if(cfg?.namedRange) {
+            return cfg.namedRange;
+        }
+
+        if(!cfg?.range && !cfg?.sheet && this.namedRange) {
+            return this.namedRange;
+        }
+
         if (
             (!this.sheetRange && (!cfg?.sheet && !cfg?.range)) ||
             (!this.sheetRange && cfg?.sheet && !cfg?.range) ||
