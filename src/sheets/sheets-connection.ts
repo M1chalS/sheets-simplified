@@ -166,23 +166,23 @@ export class SheetsConnection {
                 throw new Error(`Invalid range`);
             }
 
-            const [firstRangeHalfColumn, firstRangeHalfRow] = firstRangeHalf;
-            const [secondRangeHalfColumn, secondRangeHalfRow] = secondRangeHalf;
+            const [firstRangeHalfLetter, ...firstRangeHalfNumbers] = firstRangeHalf;
+            const [secondRangeHalfLetter, ...secondRangeHalfNumber] = secondRangeHalf;
 
             const alphabet = "abcdefghijklmnopqrstuvwxyz";
 
-            startRowIndex = Number(firstRangeHalfRow) - 1;
-            endRowIndex = Number(secondRangeHalfRow);
+            startRowIndex = Number(firstRangeHalfNumbers.join('')) - 1;
+            endRowIndex = Number(secondRangeHalfNumber.join(''));
 
             alphabet.split("").forEach((letter, index) => {
-                if(letter.toUpperCase() === firstRangeHalfColumn.toUpperCase()) {
+                if(letter.toUpperCase() === firstRangeHalfLetter.toUpperCase()) {
                     startColumnIndex = index;
                     return;
                 }
             });
 
             alphabet.split("").forEach((letter, index) => {
-                if(letter.toUpperCase() === secondRangeHalfColumn.toUpperCase()) {
+                if(letter.toUpperCase() === secondRangeHalfLetter.toUpperCase()) {
                     endColumnIndex = index + 1;
                     return;
                 }
