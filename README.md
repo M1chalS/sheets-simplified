@@ -181,6 +181,51 @@ const response = await sheetsConnection.deleteSheet({
 });
 ```
 
+### Create Named Range
+
+To create a named range, use the `createNamedRange` method, and provide the `name`, `range` and neither `sheetName` or `sheetId` in the configuration object. Currently, the package supports ranges with one letter column names, for example, "A1:B40" works, but "A1:AB40" won't work. However, this limitation is planned to be changed in the future. For ranges that exceed one letter, you can use Google's default way by providing `startRowIndex`, `endRowIndex`, `startColumnIndex`, and `endColumnIndex` in the configuration object.
+
+With `range`:
+
+```typescript
+const response = await sheetsConnection.createNamedRange({
+    name: "NewNamedRange",
+    sheetName: "Sheet1",
+    range: "A1:D4",
+});
+```
+
+With `startRowIndex`, `endRowIndex`, `startColumnIndex` and `endColumnIndex`:
+
+```typescript
+const response = await sheetsConnection.createNamedRange({
+    name: "NewNamedRange",
+    sheetId: 93726320,
+    startRowIndex: 0,
+    endRowIndex: 3,
+    startColumnIndex: 0,
+    endColumnIndex: 3,
+});
+```
+
+### Delete named range
+
+To delete a named range, use the `deleteNamedRange` method, and provide either the `name` or `namedRangeId` in the configuration object.
+
+With `name`:
+```typescript
+const response = await sheetsConnection.deleteNamedRange({
+    name: "NewNamedRange",
+});
+```
+
+With `namedRangeId`:
+```typescript
+const response = await sheetsConnection.deleteNamedRange({
+    namedRangeId: "a1b2c3d4",
+});
+```
+
 #### Special Features
 
 When retrieving data, you can set `firstRowAsHeader` to true to format the data as an object with keys derived from the first row. You can enable this feature either in the constructor or in the `get` method.

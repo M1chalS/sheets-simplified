@@ -2,6 +2,8 @@
 
 This file provides a comprehensive list of all available configuration options for each method and all available enums in the "Sheets Simplified" package, which simplifies and enhances working with Google Sheets API v4.
 
+Important info! Package will always prioritize the config object passed to the method over the config object passed to the constructor. Named range will be used over `sheet` and `range`.
+
 ### Config Objects:
 
 #### SheetsConnection Constructor Config
@@ -12,6 +14,7 @@ This file provides a comprehensive list of all available configuration options f
     spreadsheetId: string;
     sheet?: string;
     range?: string;
+    namedRange?: string;
     valueRenderOption?: ValueRenderOption;
     valueInputOption?: ValueInputOption;
     insertDataOption?: InsertDataOption;
@@ -31,6 +34,7 @@ This file provides a comprehensive list of all available configuration options f
 {
     range?: string;
     sheet?: string;
+    namedRange?: string;
     majorDimension?: Dimension;
     valueRenderOption?: ValueRenderOption;
     dateTimeRenderOption?: DateTimeRenderOption;
@@ -44,6 +48,7 @@ This file provides a comprehensive list of all available configuration options f
 {
     range?: string;
     sheet?: string;
+    namedRange?: string;
     valueInputOption?: ValueInputOption;
     insertDataOption?: InsertDataOption;
     includeValuesInResponse?: boolean;
@@ -58,6 +63,7 @@ This file provides a comprehensive list of all available configuration options f
     {
     range?: string;
     sheet?: string;
+    namedRange?: string;
     valueInputOption?: ValueInputOption;
     includeValuesInResponse?: boolean;
     responseDateTimeRenderOption?: DateTimeRenderOption;
@@ -71,6 +77,7 @@ This file provides a comprehensive list of all available configuration options f
 {
     range?: string;
     sheet?: string;
+    namedRange?: string;
 }
 ```
 
@@ -90,6 +97,30 @@ This file provides a comprehensive list of all available configuration options f
     sheetId?: number;
     sheetName?: string;
     allowSheetNameModifications?: boolean;
+}
+```
+
+#### Create Named Range Method Config
+
+```
+{
+    sheetId?: number;
+    sheetName?: string;
+    range?: string;
+    name: string;
+    startRowIndex?: number;
+    endRowIndex?: number;
+    startColumnIndex?: number;
+    endColumnIndex?: number;
+}
+```
+
+#### Delete Named Range Method Config
+
+```
+{
+    name?: string;
+    namedRangeId?: string;
 }
 ```
 

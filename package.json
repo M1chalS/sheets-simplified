@@ -1,6 +1,6 @@
 {
   "name": "sheets-simplified",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "TypeScript classes based package that eases and increases safety of working with Google Sheets API v4.",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
