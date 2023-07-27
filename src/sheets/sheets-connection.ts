@@ -1,5 +1,4 @@
 import {google, sheets_v4} from "googleapis";
-import {GoogleSheetsAuth} from "../auth/google-sheets-auth";
 import {DateTimeRenderOption, Dimension, InsertDataOption, ValueInputOption, ValueRenderOption} from "../types/types";
 import {
     AppendRequestConfiguration,
@@ -13,13 +12,14 @@ import {
     UpdateRequestConfiguration
 } from "../config/configurations";
 import {responseFormatter} from "../response-formatter/response-formatter";
+import {AuthPlus} from "googleapis/build/src/googleapis";
 
 export class SheetsConnection {
     private sheets: sheets_v4.Sheets = google.sheets("v4");
     private sheet?: string;
     private sheetRange?: string;
-    private namedRange?: string;
-    private readonly authWrapper: any;
+    private readonly namedRange?: string;
+    private readonly authWrapper: AuthPlus;
     private readonly spreadsheetId: string;
     private readonly range?: string;
     private readonly valueRenderOption: ValueRenderOption;
@@ -283,7 +283,7 @@ export class SheetsConnection {
 
     private readonly generalPayload = (cfg?: GetRequestConfiguration|AppendRequestConfiguration|UpdateRequestConfiguration|ClearRequestConfiguration): {
         spreadsheetId: string;
-        auth: GoogleSheetsAuth;
+        auth: AuthPlus;
         range: string;
     } => {
         const range = this.getSheetRange(cfg);

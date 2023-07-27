@@ -1,5 +1,8 @@
 import {AuthPlus} from "googleapis/build/src/googleapis";
 
+/**
+ * @deprecated To be removed in future versions. Use googleapis Auth instead.
+ */
 export class GoogleSheetsAuth extends AuthPlus {
     private readonly email: string;
     private readonly key: string;
